@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React from 'react';
 import PropTypes from 'prop-types';
-import { fetchHomeData } from '../../services/homeApi';
-import { updateHome } from '../../redux/actions/home-actions';
 import {
   Table,
   TableBody,
@@ -11,71 +8,78 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button,
-  Typography,
 } from '@mui/material';
 import './Home.scss';
 
 const Home = props => {
-  const dispatch = useDispatch();
-  const [message, setMessage] = useState('');
+  const { data } = props;
 
-  const hanldeUpdateData = () => {
-    fetchHomeData().then(res => dispatch(updateHome(res.data)));
-    setMessage('the data is updated, but the same date comes ;)');
+  const handlerRenderHeaders = data => {
+    const arrayOfCell = [];
+    for (let key in data[0]) {
+      if (typeof data[0][key] === 'object') {
+        for (let attachedKey in data[0][key]) {
+          if (typeof data[0][key][attachedKey] === 'object') {
+            for (let attachedSecondValue in data[0][key][attachedKey]) {
+              arrayOfCell.push(
+                <TableCell align="left">{attachedSecondValue}</TableCell>,
+              );
+            }
+          } else {
+            arrayOfCell.push(<TableCell align="left">{attachedKey}</TableCell>);
+          }
+        }
+      } else {
+        arrayOfCell.push(<TableCell align="left">{key}</TableCell>);
+      }
+    }
+    return arrayOfCell;
   };
-  const { data, children, extra } = props;
+
+  const handlerRenderCell = item => {
+    let arrayOfCell = [];
+
+    for (let key in item) {
+      if (typeof item[key] === 'object') {
+        for (let attachedValue in item[key]) {
+          if (typeof item[key][attachedValue] === 'object') {
+            for (let attachedSecondValue in item[key][attachedValue]) {
+              arrayOfCell.push(
+                <TableCell align="left">
+                  {item[key][attachedValue][attachedSecondValue]}
+                </TableCell>,
+              );
+            }
+          } else {
+            arrayOfCell.push(
+              <TableCell align="left">{item[key][attachedValue]}</TableCell>,
+            );
+          }
+        }
+      } else {
+        arrayOfCell.push(<TableCell align="left">{item[key]}</TableCell>);
+      }
+    }
+
+    return arrayOfCell;
+  };
+
   return (
     <div className="wrapper">
       <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 700 }} aria-label="customized table">
+        <Table sx={{ minWidth: '90vw' }} aria-label="customized table">
           <TableHead>
-            <TableRow>
-              <TableCell align="left">id</TableCell>
-              <TableCell align="left">Name</TableCell>
-              <TableCell align="left">Email</TableCell>
-              <TableCell align="left">Street</TableCell>
-              <TableCell align="left">City</TableCell>
-              <TableCell align="left">Company</TableCell>
-              <TableCell align="left">Some</TableCell>
-            </TableRow>
+            <TableRow>{handlerRenderHeaders(data)}</TableRow>
           </TableHead>
           <TableBody>
-            {data &&
-              data.map(({ id, username, email, address, company }, index) => (
-                <TableRow key={index}>
-                  <TableCell align="left">{id}</TableCell>
-                  <TableCell component="th" scope="row">
-                    {children ? children : username}
-                  </TableCell>
-                  <TableCell align="left">{email}</TableCell>
-                  <TableCell align="left">{address.street}</TableCell>
-                  <TableCell align="left">{address.city}</TableCell>
-                  <TableCell align="left">{company.name}</TableCell>
-                  <TableCell align="left">{extra}</TableCell>
-                </TableRow>
-              ))}
+            {data.map(item => (
+              <TableRow>{handlerRenderCell(item)}</TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
-      <Button
-        onClick={() => hanldeUpdateData()}
-        variant="outlined"
-        color="inherit"
-      >
-        Update
-      </Button>
-      {message.length > 0 && (
-        <Typography align="center" variant="h6" component="h2">
-          {message}
-        </Typography>
-      )}
     </div>
   );
-};
-
-Home.defaultProps = {
-  extra: 'default props',
 };
 
 Home.propTypes = {
